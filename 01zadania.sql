@@ -44,3 +44,77 @@ SELECT imie, CASE
                 AS "Zjada rocznie" FROM kocury;
 
 --Zad9
+--24 wrzeœnia
+SELECT pseudo, w_stadku_od "W STADKU", 
+    CASE 
+        WHEN EXTRACT(DAY FROM w_stadku_od)<=15 THEN NEXT_DAY(LAST_DAY('2019-09-24') - 7, 'Œroda')
+        ELSE NEXT_DAY(LAST_DAY(ADD_MONTHS('2019-09-24',1))-7, 'Œroda')
+        END
+        AS "WYPLATA"
+    FROM kocury;
+--26 wrzeœnia
+SELECT pseudo, w_stadku_od "W STADKU", 
+    CASE 
+        WHEN EXTRACT(DAY FROM w_stadku_od)<=15 
+            THEN  CASE
+            WHEN NEXT_DAY(LAST_DAY('2019-09-26') - 7, 'Œroda') < '2019-09-26' THEN NEXT_DAY(LAST_DAY(ADD_MONTHS('2019-09-26',1))-7, 'Œroda')
+            ELSE NEXT_DAY(LAST_DAY('2019-09-26') - 7, 'Œroda')
+            END
+        ELSE NEXT_DAY(LAST_DAY(ADD_MONTHS('2019-09-26',1))-7, 'Œroda')
+        END
+        AS "WYPLATA"
+    FROM kocury;
+--data bie¿aca
+SELECT pseudo, w_stadku_od "W STADKU", 
+    CASE 
+        WHEN EXTRACT(DAY FROM w_stadku_od)<=15 
+            THEN  CASE
+            WHEN NEXT_DAY(LAST_DAY(SYSDATE) - 7, 'Œroda') < SYSDATE THEN NEXT_DAY(LAST_DAY(ADD_MONTHS(SYSDATE,1))-7, 'Œroda')
+            ELSE NEXT_DAY(LAST_DAY(SYSDATE) - 7, 'Œroda')
+            END
+        ELSE NEXT_DAY(LAST_DAY(ADD_MONTHS(SYSDATE,1))-7, 'Œroda')
+        END
+        AS "WYPLATA"
+    FROM kocury;
+    
+    
+--Zad10
+--atr.pseudo
+SELECT pseudo ||' - ' || 
+DECODE(COUNT (*), 1, 'Unikalny', 'Nieunikalny') 
+AS "Unikalnosc atr. PSEUDO" 
+    FROM Kocury
+    GROUP BY pseudo;
+--atr.szef
+SELECT szef ||' - ' || 
+DECODE(COUNT (*), 1, 'Unikalny', 'Nieunikalny') 
+AS "Unikalnosc atr. SZEF" 
+    FROM Kocury
+    WHERE szef IS NOT NULL
+    GROUP BY szef;
+    
+--Zad11
+SELECT pseudo "Pseudonim", COUNT(*) "Liczba wrogow"
+    FROM wrogowie_kocurow
+    GROUP BY pseudo
+    HAVING COUNT(*)>=2;
+    
+--Zad12
+SELECT 'Liczba kotow=' " ", COUNT(*) "  ", 'lowi jako' "   ", funkcja "    ", 'i zjada max.' "     ",
+    MAX(NVL(myszy_extra,0)+NVL(przydzial_myszy,0))"      ", 'myszy miesiecznie' "       "
+    FROM Kocury
+    WHERE funkcja!= 'SZEFUNIO' AND plec IN ('D', null)
+    GROUP BY funkcja
+    HAVING MAX(NVL(myszy_extra,0)+NVL(przydzial_myszy,0))>50;
+    
+--Zad13
+SELECT nr_bandy "Nr bandy", plec "Plec", MIN(przydzial_myszy) "Minimalny przydzial" FROM Kocury
+    GROUP BY nr_bandy, plec;
+    
+--Zad14
+SELECT level "Poziom", pseudo "Pseudonim", funkcja "Funkcja", nr_bandy "Nr bandy"
+    FROM Kocury
+    WHERE plec='M' 
+    CONNECT BY  PRIOR pseudo=szef 
+    START WITH funkcja = 'BANDZIOR';
+
