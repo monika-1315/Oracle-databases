@@ -118,3 +118,16 @@ SELECT level "Poziom", pseudo "Pseudonim", funkcja "Funkcja", nr_bandy "Nr bandy
     CONNECT BY  PRIOR pseudo=szef 
     START WITH funkcja = 'BANDZIOR';
 
+--Zad15
+SELECT  LPAD(level-1, (level-1)*4+1, '===>')||'                ' || imie "Hierarchia", DECODE(szef, null, 'Sam sobie panem', szef) "Pseudo szefa", funkcja "Funkcja"
+    FROM Kocury
+    WHERE myszy_extra IS NOT NULL 
+    CONNECT BY PRIOR pseudo=szef
+    START WITH szef IS NULL;
+    
+--Zad16
+SELECT LPAD(' ', (level-1)*4, ' ')|| pseudo AS "Droga sluzbowa"
+    FROM Kocury
+    CONNECT BY pseudo=PRIOR szef
+    START WITH plec='M'AND myszy_extra IS NULL AND Months_Between(SYSDATE, w_stadku_od)>=120;
+   
