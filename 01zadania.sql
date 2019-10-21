@@ -1,7 +1,7 @@
 ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD';
 
 --Zad1
-SELECT imie_wroga, opis_incydentu FROM Wrogowie_kocurow
+SELECT imie_wroga "WROG", opis_incydentu "PRZEWINA" FROM Wrogowie_kocurow
     WHERE EXTRACT (YEAR FROM data_incydentu)=2009;
     
 --Zad2
@@ -27,7 +27,7 @@ SELECT pseudo,
     WHERE pseudo LIKE '%A%' and pseudo LIKE '%L%';
     
 --Zad6
-SELECT imie, w_stadku_od AS "W stadku",  CEIL(przydzial_myszy*0.9) AS "Zjadal", Add_Months(w_stadku_od, 6) AS "Podwyzka", przydzial_myszy AS "Zjada"  
+SELECT imie, w_stadku_od AS "W stadku",  ROUND(przydzial_myszy/1.1) AS "Zjadal", Add_Months(w_stadku_od, 6) AS "Podwyzka", przydzial_myszy AS "Zjada"  
     FROM kocury
     WHERE Months_Between(SYSDATE, w_stadku_od)>=120 AND EXTRACT (MONTH FROM w_stadku_od) BETWEEN 3 AND 9;
 
@@ -81,13 +81,13 @@ SELECT pseudo, w_stadku_od "W STADKU",
 --Zad10
 --atr.pseudo
 SELECT pseudo ||' - ' || 
-DECODE(COUNT (*), 1, 'Unikalny', 'Nieunikalny') 
+DECODE(COUNT (pseudo), 1, 'Unikalny', 'Nieunikalny') 
 AS "Unikalnosc atr. PSEUDO" 
     FROM Kocury
     GROUP BY pseudo;
 --atr.szef
 SELECT szef ||' - ' || 
-DECODE(COUNT (*), 1, 'Unikalny', 'Nieunikalny') 
+DECODE(COUNT (pseudo), 1, 'Unikalny', 'Nieunikalny') 
 AS "Unikalnosc atr. SZEF" 
     FROM Kocury
     WHERE szef IS NOT NULL
@@ -109,7 +109,7 @@ SELECT 'Liczba kotow=' " ", COUNT(*) "  ", 'lowi jako' "   ", funkcja "    ", 'i
     
 --Zad13
 SELECT nr_bandy "Nr bandy", plec "Plec", MIN(przydzial_myszy) "Minimalny przydzial" FROM Kocury
-    GROUP BY nr_bandy, plec;
+    GROUP BY plec, nr_bandy;
     
 --Zad14
 SELECT level "Poziom", pseudo "Pseudonim", funkcja "Funkcja", nr_bandy "Nr bandy"
@@ -119,7 +119,8 @@ SELECT level "Poziom", pseudo "Pseudonim", funkcja "Funkcja", nr_bandy "Nr bandy
     START WITH funkcja = 'BANDZIOR';
 
 --Zad15
-SELECT  LPAD(level-1, (level-1)*4+1, '===>')||'                ' || imie "Hierarchia", DECODE(szef, null, 'Sam sobie panem', szef) "Pseudo szefa", funkcja "Funkcja"
+SELECT  LPAD(level-1, (level-1)*4+1, '===>')||'                ' || imie "Hierarchia", 
+        DECODE(szef, null, 'Sam sobie panem', szef) "Pseudo szefa", funkcja "Funkcja"
     FROM Kocury
     WHERE myszy_extra IS NOT NULL 
     CONNECT BY PRIOR pseudo=szef
