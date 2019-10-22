@@ -23,3 +23,27 @@ SELECT k1.imie, k1.funkcja, k2.imie "Szef1", k3.imie "Szef2", k4.imie "Szef3"
     WHERE k1.funkcja IN ('KOT', 'MILUSIA');
     
 --b
+--SELECT imie, funkcja, 
+
+
+--Zad20
+SELECT k.imie "Imie kotki", b.nazwa "Nazwa bandy", w.imie_wroga "Imie wroga", w.stopien_wrogosci "Ocena wroga", wk.data_incydentu "Data inc."
+    FROM Kocury k JOIN Bandy b ON k.nr_bandy=b.nr_bandy AND plec='D'
+        JOIN Wrogowie_Kocurow wk ON k.pseudo=wk.pseudo AND data_incydentu>'2007-01-01'
+        JOIN wrogowie w ON w.imie_wroga=wk.imie_wroga;
+        
+--Zad21
+SELECT b.nazwa "Nazwa bandy", 
+(SELECT COUNT(DISTINCT wk.pseudo) FROM Kocury k JOIN wrogowie_kocurow wk ON wk.pseudo=k.pseudo
+    WHERE k.nr_bandy=b.nr_bandy GROUP BY k.nr_bandy) "Koty z wrogami"
+    FROM Bandy b;
+
+
+SELECT b.nazwa "Nazwa bandy", sel.kw "Koty z wrogami"
+FROM bandy b JOIN
+(SELECT COUNT(DISTINCT wk.pseudo) kw, b.nr_bandy
+    FROM Kocury K JOIN Wrogowie_kocurow wk ON k.pseudo=wk.pseudo
+        JOIN Bandy b ON b.nr_bandy=k.nr_bandy
+    GROUP BY b.nr_bandy) sel
+ON b.nr_bandy=sel.nr_bandy;
+        
