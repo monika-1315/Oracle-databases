@@ -47,3 +47,90 @@ FROM bandy b JOIN
     GROUP BY b.nr_bandy) sel
 ON b.nr_bandy=sel.nr_bandy;
         
+--Zad22
+SELECT k.funkcja, k.pseudo, sel.lw "Liczba wrogow"
+FROM Kocury k JOIN
+(SELECT COUNT(pseudo) lw, pseudo
+    FROM Wrogowie_kocurow
+    GROUP BY pseudo) sel
+ON k.pseudo = sel.pseudo
+WHERE sel.lw>1;
+
+--Zad23
+SELECT * FROM (
+SELECT imie, 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) "DAWKA ROCZNA", 'powyzej 864' dawka
+    FROM Kocury
+    WHERE 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))>864 AND myszy_extra IS NOT NULL
+UNION
+SELECT imie, 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)), '864'
+    FROM Kocury
+    WHERE 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))=864 AND myszy_extra IS NOT NULL
+UNION
+SELECT imie, 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) dr, 'ponizej 864'
+    FROM Kocury
+    WHERE 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))<864 AND myszy_extra IS NOT NULL)
+ORDER BY 2 DESC;
+
+--Zad24
+SELECT b.nr_bandy "NR BANDY", b.nazwa, b.teren
+    FROM Bandy b LEFT JOIN Kocury k
+    ON b.nr_bandy=k.nr_bandy
+    WHERE k.nr_bandy IS NULL;
+    
+SELECT nr_bandy "NR BANDY", nazwa, teren
+    FROM Bandy  
+MINUS (SELECT b1.nr_bandy, b1.nazwa, b1.teren
+                FROM Bandy b1 JOIN Kocury k
+                ON b1.nr_bandy=k.nr_bandy);
+                
+--Zad25
+SELECT imie, funkcja, przydzial_myszy
+    FROM Kocury
+    WHERE przydzial_myszy >= ALL (SELECT 3*przydzial_myszy
+                        FROM Kocury k JOIN BANDY b 
+                        ON k.nr_bandy=b.nr_bandy AND funkcja='MILUSIA' AND teren IN ('SAD', 'CALOSC'));
+            
+--Zad26
+WITH Sr AS 
+    (SELECT ROUND(AVG(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))) sre, funkcja
+        FROM Kocury
+        GROUP BY funkcja)
+SELECT DISTINCT k.funkcja "Funkcja", sre "Srednio najw. i najm. myszy"
+FROM Kocury k JOIN Sr ON k.funkcja=Sr.funkcja
+WHERE k.funkcja!='SZEFUNIO' AND (sre<=ALL (SELECT ROUND(AVG(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))) sre
+        FROM Kocury WHERE funkcja!='SZEFUNIO' GROUP BY funkcja)
+            OR sre>=ALL     (SELECT ROUND(AVG(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))) sre
+        FROM Kocury WHERE funkcja!='SZEFUNIO' GROUP BY funkcja));
+        
+--Zad27
+--a
+
+--b
+SELECT pseudo, zjada 
+FROM (SELECT pseudo, zjada, ROWNUM
+    FROM (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada
+        FROM Kocury 
+        ORDER BY 2 DESC))
+    WHERE 
+    
+SELECT * FROM
+(SELECT pseudo, zjada, ROWNUM
+FROM (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada
+    FROM Kocury 
+    ORDER BY 2 DESC))s1
+    JOIN
+    (SELECT pseudo, zjada
+    FROM (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada
+    FROM Kocury 
+    ORDER BY 2 DESC))s2
+    ON s1.zjada=s2.zjada AND s1.pseudo<s2.pseudo
+WHERE ROWNUM<=&n OR
+--c
+--d
+SELECT pseudo, zjada
+FROM (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada, 
+                DENSE_RANK()
+                OVER (ORDER BY NVL(przydzial_myszy,0)+NVL(myszy_extra,0) DESC) pozycja
+        FROM Kocury)
+WHERE pozycja<= &n;
+        
