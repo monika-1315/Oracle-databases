@@ -104,29 +104,34 @@ WHERE k.funkcja!='SZEFUNIO' AND (sre<=ALL (SELECT ROUND(AVG(NVL(przydzial_myszy,
         
 --Zad27
 --a
-
+SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada 
+        FROM Kocury K
+    WHERE &n> (SELECT COUNT (pseudo)
+            FROM Kocury 
+            WHERE NVL(przydzial_myszy,0)+NVL(myszy_extra,0)>NVL(K.przydzial_myszy,0)+NVL(K.myszy_extra,0))
+    ORDER BY 2 DESC;      
 --b
-SELECT pseudo, zjada 
-FROM (SELECT pseudo, zjada, ROWNUM
-    FROM (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada
-        FROM Kocury 
-        ORDER BY 2 DESC))
-    WHERE 
+WITH Zj AS (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada 
+        FROM Kocury
+        ORDER BY 2 desc)
+SELECT pseudo, zjada
+FROM Zj
+    WHERE zjada IN (SELECT DISTINCT zjada from Zj WHERE rownum<=&n);
     
-SELECT * FROM
-(SELECT pseudo, zjada, ROWNUM
-FROM (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada
-    FROM Kocury 
-    ORDER BY 2 DESC))s1
-    JOIN
-    (SELECT pseudo, zjada
-    FROM (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada
-    FROM Kocury 
-    ORDER BY 2 DESC))s2
-    ON s1.zjada=s2.zjada AND s1.pseudo<s2.pseudo
-WHERE ROWNUM<=&n OR
 --c
+WITH Koc AS
+    (SELECT k1.pseudo pseud, NVL(k2.przydzial_myszy,0)+NVL(k2.myszy_extra,0) powt, NVL(k1.przydzial_myszy,0)+NVL(k1.myszy_extra,0) zjada 
+        FROM Kocury k1 JOIN Kocury k2
+        ON NVL(k1.przydzial_myszy,0)+NVL(k1.myszy_extra,0) <=  NVL(k2.przydzial_myszy,0)+NVL(k2.myszy_extra,0) )
+SELECT DISTINCT Koc2.pseud, zjada
+FROM Koc JOIN (SELECT pseud, COUNT( DISTINCT powt) cp
+                FROM Koc
+                GROUP BY pseud)koc2
+    ON Koc.pseud=koc2.pseud
+WHERE &n>=cp
+ORDER BY 2 DESC;
 --d
+
 SELECT pseudo, zjada
 FROM (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada, 
                 DENSE_RANK()
