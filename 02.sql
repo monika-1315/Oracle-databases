@@ -201,3 +201,73 @@ UNION (SELECT imie, to_char(w_stadku_od), ' '
     FROM Kocury k
     WHERE NOT EXISTS (SELECT imie FROM Naj
                     WHERE imie=k.imie));
+                    
+--Zad31 
+CREATE OR REPLACE VIEW Bandy_info (nazwa_bandy, sre_spoz, max_spoz, min_spoz, koty, koty_z_dod)
+AS SELECT b.nazwa, AVG(NVL(k.przydzial_myszy,0)), MAX(NVL(k.przydzial_myszy,0)),
+        MIN(NVL(k.przydzial_myszy,0)), COUNT(k.pseudo), COUNT(k.myszy_extra)
+    FROM Bandy b JOIN Kocury k
+        ON b.nr_bandy=k.nr_bandy
+    GROUP BY k.nr_bandy, b.nazwa;
+    
+SELECT * FROM Bandy_info;
+
+SELECT pseudo pseudonim, imie, funkcja, przydzial_myszy zjada,
+    'od '||min_spoz || ' do '||max_spoz "GRANICE SPOZYCIA", w_stadku_od "LOWI OD"
+FROM Kocury K
+    LEFT JOIN Bandy b ON   K.nr_bandy=B.nr_bandy
+    LEFT JOIN Bandy_info bi ON b.nazwa=bi.nazwa_bandy
+WHERE pseudo='&pseudo_kota';
+
+--Zad32
+CREATE OR REPLACE VIEW Podw AS (SELECT pseudo
+                FROM (SELECT pseudo,  DENSE_RANK() OVER (ORDER BY w_stadku_od) pozycja                     
+                        FROM Kocury k JOIN Bandy b
+                        ON k.nr_bandy=b.nr_bandy
+                        WHERE nazwa ='CZARNI RYCERZE'
+                        UNION (SELECT pseudo,  DENSE_RANK() OVER (ORDER BY w_stadku_od) pozycja
+                            FROM Kocury k JOIN Bandy b
+                            ON k.nr_bandy=b.nr_bandy
+                            WHERE nazwa ='LACIACI MYSLIWI'))
+                    WHERE pozycja<=3);
+                    
+SELECT pseudo "Pseudonim", w_stadku_od, plec "Plec", przydzial_myszy "Myszy przed podw.", NVL(myszy_extra,0) "Extra przed podw."
+FROM Kocury
+WHERE pseudo IN (SELECT * FROM Podw);
+  --UPDATE Kocury k SET k.przydzial_myszy= przydzial_myszy+ 0.1*(SELECT AVG(NVL(przydzial_myszy,0)) FROM Bandy b GROUP BY b.nr_bandy HAVING b.nr_bandy=k.nr_bandy)WHERE k.plec='D' AND k.pseudo IN (SELECT * FROM Podw);
+UPDATE Kocury k
+SET k.przydzial_myszy= k.przydzial_myszy+ 0.1*(SELECT min_spoz FROM Bandy_info bi
+                                            JOIN Bandy b ON b.nazwa=bi.nazwa_bandy
+                                            WHERE b.nr_bandy=k.nr_bandy)
+WHERE k.plec='D' AND k.pseudo IN (SELECT * FROM Podw);
+
+UPDATE Kocury 
+SET przydzial_myszy= przydzial_myszy+10
+WHERE plec='M' AND pseudo IN (SELECT * FROM Podw);
+
+UPDATE Kocury K
+SET k.myszy_extra=NVL(k.myszy_extra,0)+(15/100*(SELECT (AVG(NVL(k.myszy_extra,0)))
+                                            FROM Kocury
+                                            WHERE Kocury.nr_bandy=k.nr_bandy))
+WHERE k.pseudo IN (SELECT * FROM Podw);
+                    
+SELECT pseudo "Pseudonim", w_stadku_od, plec "Plec", przydzial_myszy "Myszy po podw.", NVL(myszy_extra,0) "Extra po podw."
+FROM Kocury
+WHERE pseudo IN (SELECT * FROM Podw);
+            
+--SELECT * FROM Kocury WHERE pseudo='DAMA'; SELECT * FROM Bandy; SELECT * FROM Bandy_Info;
+ROLLBACK;
+
+
+UPDATE KOCURY
+SET PRZYDZIAL_MYSZY = case PLEC
+    WHEN 'M' then PRZYDZIAL_MYSZY+10
+    else (PRZYDZIAL_MYSZY+ (Select MIN(PRZYDZIAL_MYSZY) from KOCURY)*0.1) end,
+     MYSZY_EXtRA = NVL(MYSZY_EXTRA, 0) + ((select AVG(NVL(MYSZY_EXTRA, 0)) from KOCURY K2 where KOCURY.NR_BANDY = K2.NR_BANDY) * 0.15)
+where PSEUDO in (SELECT * from
+                    (Select PSEUDO from KOCURY K left join BANDY B on K.NR_BANDY = B.NR_BANDY WHERE B.NAZWA = 'CZARNI RYCERZE' ORDER BY W_STADKU_OD asc )
+                 where ROWNUM<=3
+        union all
+                 SELECT * from
+                    (Select PSEUDO from KOCURY K left join BANDY B on K.NR_BANDY = B.NR_BANDY WHERE B.NAZWA = 'LACIACI MYSLIWI' ORDER BY W_STADKU_OD asc )
+                 where ROWNUM<=3 );
