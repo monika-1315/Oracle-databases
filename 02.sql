@@ -157,4 +157,32 @@ SELECT rok, wstapienia "LICZBA WSTAPIEN"
     UNION SELECT * FROM Srednia
     ORDER BY 2;
             
-          
+--Zad29
+--a
+SELECT k.imie, NVL(k.przydzial_myszy,0)+NVL(k.myszy_extra,0) zjada, k.nr_bandy, ROUND(AVG(NVL(k2.przydzial_myszy,0)+NVL(k2.myszy_extra,0)),2) "SREDNIA BANDY"
+    FROM Kocury k JOIN Kocury k2
+    ON k.plec='M' AND k.nr_bandy=k2.nr_bandy
+    GROUP BY k.nr_bandy, k.imie, k.przydzial_myszy, k.myszy_extra
+    HAVING NVL(k.przydzial_myszy,0)+NVL(k.myszy_extra,0)< AVG(NVL(k2.przydzial_myszy,0)+NVL(k2.myszy_extra,0));
+    
+--b
+SELECT k.imie, NVL(k.przydzial_myszy,0)+NVL(k.myszy_extra,0) zjada, k.nr_bandy,  ka.srednia_bandy
+    FROM Kocury k
+    JOIN (SELECT nr_bandy, AVG(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) srednia_bandy
+        FROM Kocury
+        GROUP BY nr_bandy) ka
+    ON k.plec='M' AND k.nr_bandy=ka.nr_bandy
+    WHERE NVL(k.przydzial_myszy,0)+NVL(k.myszy_extra,0)<ka.srednia_bandy;
+    
+--c
+SELECT k.imie, NVL(k.przydzial_myszy,0)+NVL(k.myszy_extra,0) zjada, k.nr_bandy, 
+        (SELECT ROUND(AVG(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),2)
+            FROM Kocury
+            WHERE nr_bandy=k.nr_bandy
+            GROUP BY k.nr_bandy) srednia_bandy
+    FROM Kocury k
+    WHERE k.plec='M' AND
+        (SELECT ROUND(AVG(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),2)
+            FROM Kocury
+            WHERE nr_bandy=k.nr_bandy
+            GROUP BY k.nr_bandy)>NVL(k.przydzial_myszy,0)+NVL(k.myszy_extra,0);
