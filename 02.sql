@@ -139,3 +139,22 @@ FROM (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada,
         FROM Kocury)
 WHERE pozycja<= &n;
         
+--Zad28
+WITH Wstap AS (SELECT to_char(EXTRACT (YEAR FROM w_stadku_od)) rok, COUNT(pseudo) wstapienia
+    FROM Kocury
+    GROUP BY EXTRACT (YEAR FROM w_stadku_od)),
+    Srednia AS (SELECT 'srednia', ROUND(AVG(wstapienia),7) av
+            FROM Wstap),
+    Liczby AS (SELECT wstapienia,DENSE_RANK() OVER (ORDER BY wstapienia) pozycja
+                FROM(SELECT wstapienia FROM Wstap
+                            UNION (SELECT av FROM Srednia)))
+SELECT rok, wstapienia "LICZBA WSTAPIEN"
+    FROM Wstap
+    WHERE wstapienia IN (SELECT wstapienia 
+                            FROM Liczby
+                        WHERE pozycja = (SELECT pozycja FROM Liczby WHERE wstapienia= (SELECT av FROM Srednia))-1
+                            OR pozycja = (SELECT pozycja FROM Liczby WHERE wstapienia= (SELECT av FROM Srednia))+1)
+    UNION SELECT * FROM Srednia
+    ORDER BY 2;
+            
+          
