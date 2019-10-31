@@ -186,3 +186,18 @@ SELECT k.imie, NVL(k.przydzial_myszy,0)+NVL(k.myszy_extra,0) zjada, k.nr_bandy,
             FROM Kocury
             WHERE nr_bandy=k.nr_bandy
             GROUP BY k.nr_bandy)>NVL(k.przydzial_myszy,0)+NVL(k.myszy_extra,0);
+            
+--Zad30
+WITH Naj AS (SELECT imie, w_stadku_od||'<--' "WSTAPIL DO STADKA", 'NAJSTARSZY STAZEM W BANDZIE ' || nazwa " "
+        FROM Kocury k JOIN Bandy b
+        ON k.nr_bandy=b.nr_bandy
+        WHERE w_stadku_od<= ALL (SELECT w_stadku_od FROM Kocury k2 WHERE k2.nr_bandy=k.nr_bandy)
+UNION (SELECT imie, w_stadku_od||' <--', 'NAJMLODSZY STAZEM W BANDZIE ' || nazwa
+        FROM Kocury k JOIN Bandy b
+        ON k.nr_bandy=b.nr_bandy
+        WHERE w_stadku_od>= ALL (SELECT w_stadku_od FROM Kocury k2 WHERE k2.nr_bandy=k.nr_bandy)))
+SELECT * FROM Naj
+UNION (SELECT imie, to_char(w_stadku_od), ' '
+    FROM Kocury k
+    WHERE NOT EXISTS (SELECT imie FROM Naj
+                    WHERE imie=k.imie));
