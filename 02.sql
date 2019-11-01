@@ -323,16 +323,18 @@ FROM Kocury));
 
 --b
 
-SELECT nazwa_bandy "NAZWA BANDY", plec, ile, NVL(szefunio,0), NVL(bandzior,0), NVL(lowczy,0), NVL(lapacz, 0), NVL(kot,0), NVL(milusia,0), NVL(dzielczy,0)--, suma
+SELECT nazwa_bandy "NAZWA BANDY", plec_ plec, ile, NVL(szefunio,0), NVL(bandzior,0), NVL(lowczy,0), NVL(lapacz, 0), NVL(kot,0), NVL(milusia,0), NVL(dzielczy,0), suma
+--SELECT *
+FROM (SELECT *
 FROM
-(SELECT b.nazwa nazwa_bandy, funkcja, 
-        --DECODE(k.plec, 'D', b.nazwa, ' ') NAZWAB, 
-        DECODE(k.plec, 'D', 'Kotka', 'Kocor') plec, to_char(COUNT(k.pseudo)) ile,
+(SELECT b.nr_bandy, funkcja, plec,-- b.nazwa nazwa_bandy, 
+        DECODE(k.plec, 'D', b.nazwa, ' ') NAZWA_BANDY, 
+        DECODE(k.plec, 'D', 'Kotka', 'Kocor') plec_, 
         NVL(przydzial_myszy,0)+NVL(myszy_extra,0) przydzial
-        --,SUM(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) suma 
+        --to_char(COUNT(k.pseudo)) ile,SUM(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) suma 
     FROM Kocury k JOIN Bandy b
     ON k.nr_bandy = b.nr_bandy
-    GROUP BY b.nazwa, k.plec--, funkcja, przydzial_myszy, myszy_extra
+    --GROUP BY b.nazwa, k.plec--, funkcja, przydzial_myszy, myszy_extra
 )
 PIVOT
     (SUM (przydzial)
@@ -344,25 +346,11 @@ PIVOT
         'KOT' KOT,
         'MILUSIA' milusia,
         'DZIELCZY' dzielczy)
-    )
- ORDER BY nazwa_bandy;
- 
- 
- 
- select * from
-              (select nazwa, decode(PLEC, 'D', 'Kotka' , 'Kocur') plec, FUNKCJA, (NVL(PRZYDZIAL_MYSZY,0) + nvl(MYSZY_ExTRA, 0)) przydzial
-                from KOCURY natural join BANDY K1)
-pivot (
-    sum(NVL(przydzial,0))
-    for FUNKCJA
-    IN ('SZEFUNIO', 'BANDZIOR', 'LOWCZY', 'LAPACZ', 'KOT', 'MILUSIA', 'DZIELCZY')
-    )
-union
-select * from
-              (select 'Zjada razem ' nazwa, ' ' plec, FUNKCJA, (NVL(PRZYDZIAL_MYSZY,0) + nvl(MYSZY_ExTRA, 0)) przydzial
-              from KOCURY natural join BANDY)
-pivot (
-    sum(NVL(przydzial,0))     --element agregacji (funkcja wyliczeniowa)
-    for FUNKCJA                       --for X dane na podstawie ktorych maj¹ powstac kolumny
-    IN ('SZEFUNIO', 'BANDZIOR', 'LOWCZY', 'LAPACZ', 'KOT', 'MILUSIA', 'DZIELCZY') --in (y1,y2) jakie kolumny maj¹ powstaæ na podstawie danych z kolumny X
-    );
+    )) sel1
+ JOIN (SELECT nr_bandy, to_char(COUNT(pseudo)) ile,SUM(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) suma,  plec
+        FROM Kocury
+        GROUP BY nr_bandy, plec
+        ) sel2
+ON sel1.nr_bandy=sel2.nr_bandy AND sel1.plec=sel2.plec
+ORDER BY sel1.nr_bandy
+;
