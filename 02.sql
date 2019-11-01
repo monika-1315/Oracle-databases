@@ -323,34 +323,49 @@ FROM Kocury));
 
 --b
 
-SELECT nazwa_bandy "NAZWA BANDY", plec_ plec, ile, NVL(szefunio,0), NVL(bandzior,0), NVL(lowczy,0), NVL(lapacz, 0), NVL(kot,0), NVL(milusia,0), NVL(dzielczy,0), suma
---SELECT *
+SELECT nazwa_bandy "NAZWA BANDY", plec_ plec, ile, 
+        to_char(NVL(szefunio,0)) "SZEFUNIO", to_char(NVL(bandzior,0)) "BANDZIOR", to_char(NVL(lowczy,0)) "LOWCZY", to_char(NVL(lapacz, 0))"LAPACZ" , 
+        to_char(NVL(kot,0))"KOT", to_char(NVL(milusia,0)) "MILUSIA", to_char(NVL(dzielczy,0))"DZIELCZY", to_char(suma) "SUMA"
 FROM (SELECT *
-FROM
-(SELECT b.nr_bandy, funkcja, plec,-- b.nazwa nazwa_bandy, 
-        DECODE(k.plec, 'D', b.nazwa, ' ') NAZWA_BANDY, 
-        DECODE(k.plec, 'D', 'Kotka', 'Kocor') plec_, 
-        NVL(przydzial_myszy,0)+NVL(myszy_extra,0) przydzial
-        --to_char(COUNT(k.pseudo)) ile,SUM(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) suma 
-    FROM Kocury k JOIN Bandy b
-    ON k.nr_bandy = b.nr_bandy
-    --GROUP BY b.nazwa, k.plec--, funkcja, przydzial_myszy, myszy_extra
-)
-PIVOT
-    (SUM (przydzial)
-    FOR funkcja
-    IN ('SZEFUNIO' szefunio,
-        'BANDZIOR' bandzior,
-        'LOWCZY' lowczy,
-        'LAPACZ' lapacz,
-        'KOT' KOT,
-        'MILUSIA' milusia,
-        'DZIELCZY' dzielczy)
-    )) sel1
+    FROM(SELECT b.nr_bandy, funkcja, plec,-- b.nazwa nazwa_bandy, 
+            DECODE(k.plec, 'D', b.nazwa, ' ') NAZWA_BANDY, 
+            DECODE(k.plec, 'D', 'Kotka', 'Kocor') plec_, 
+            NVL(przydzial_myszy,0)+NVL(myszy_extra,0) przydzial
+            --to_char(COUNT(k.pseudo)) ile,SUM(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) suma 
+        FROM Kocury k JOIN Bandy b
+        ON k.nr_bandy = b.nr_bandy
+        )
+    PIVOT
+        (SUM (przydzial)
+        FOR funkcja
+        IN ('SZEFUNIO' szefunio,
+            'BANDZIOR' bandzior,
+            'LOWCZY' lowczy,
+            'LAPACZ' lapacz,
+            'KOT' KOT,
+            'MILUSIA' milusia,
+            'DZIELCZY' dzielczy)
+        )
+        ORDER BY nr_bandy) sel1
  JOIN (SELECT nr_bandy, to_char(COUNT(pseudo)) ile,SUM(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) suma,  plec
         FROM Kocury
-        GROUP BY nr_bandy, plec
-        ) sel2
+        GROUP BY nr_bandy, plec) sel2
 ON sel1.nr_bandy=sel2.nr_bandy AND sel1.plec=sel2.plec
-ORDER BY sel1.nr_bandy
+
+UNION ALL
+(SELECT '-----------------', '------', '----', '---------', '---------', '---------', '---------', '---------', '---------', '---------', '-------' FROM dual)
+UNION ALL
+(SELECT 'ZJADA RAZEM', ' ', '  ',
+        to_char(SUM(DECODE(funkcja, 'SZEFUNIO',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "SZEFUNIO",
+        to_char(SUM(DECODE(funkcja, 'BANDZIOR',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "BANDZIOR",
+        to_char(SUM(DECODE(funkcja, 'LOWCZY',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "LOWCZY",
+        to_char(SUM(DECODE(funkcja, 'LAPACZ',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "LAPACZ",
+        to_char(SUM(DECODE(funkcja, 'KOT',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "KOT",
+        to_char(SUM(DECODE(funkcja, 'MILUSIA',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "MILUSIA",
+        to_char(SUM(DECODE(funkcja, 'DZIELCZY',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "DZIELCZY",
+        to_char(SUM((NVL(przydzial_myszy,0)+NVL(myszy_extra,0)))) "SUMA"
+FROM Kocury)
 ;
+
+ 
+ 
