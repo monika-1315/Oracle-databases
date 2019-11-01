@@ -288,3 +288,36 @@ WHERE pseudo IN (SELECT * FROM Podw);
 --SELECT * FROM Kocury WHERE pseudo='DAMA'; SELECT * FROM Bandy; SELECT * FROM Bandy_Info;
 ROLLBACK;
 
+--Zad33
+--a
+SELECT * FROM
+(SELECT DECODE(k.plec, 'D', b.nazwa, ' ') "NAZWA BANDY", 
+        DECODE(k.plec, 'D', 'Kotka', 'Kocor') plec, to_char(COUNT(k.pseudo)) ile,
+        to_char(SUM(DECODE(funkcja, 'SZEFUNIO',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "SZEFUNIO",
+        to_char(SUM(DECODE(funkcja, 'BANDZIOR',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "BANDZIOR",
+        to_char(SUM(DECODE(funkcja, 'LOWCZY',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "LOWCZY",
+        to_char(SUM(DECODE(funkcja, 'LAPACZ',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "LAPACZ",
+        to_char(SUM(DECODE(funkcja, 'KOT',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "KOT",
+        to_char(SUM(DECODE(funkcja, 'MILUSIA',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "MILUSIA",
+        to_char(SUM(DECODE(funkcja, 'DZIELCZY',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "DZIELCZY",
+        to_char(SUM((NVL(przydzial_myszy,0)+NVL(myszy_extra,0)))) "SUMA"
+FROM Kocury k JOIN Bandy b
+ON k.nr_bandy = b.nr_bandy
+GROUP BY b.nazwa, k.plec
+ORDER BY b.nazwa
+)
+UNION ALL
+((SELECT '-----------------', '------', '----', '---------', '---------', '---------', '---------', '---------', '---------', '---------', '-------' FROM dual)
+UNION ALL
+(SELECT 'ZJADA RAZEM', ' ', '  ',
+        to_char(SUM(DECODE(funkcja, 'SZEFUNIO',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "SZEFUNIO",
+        to_char(SUM(DECODE(funkcja, 'BANDZIOR',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "BANDZIOR",
+        to_char(SUM(DECODE(funkcja, 'LOWCZY',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "LOWCZY",
+        to_char(SUM(DECODE(funkcja, 'LAPACZ',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "LAPACZ",
+        to_char(SUM(DECODE(funkcja, 'KOT',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "KOT",
+        to_char(SUM(DECODE(funkcja, 'MILUSIA',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "MILUSIA",
+        to_char(SUM(DECODE(funkcja, 'DZIELCZY',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "DZIELCZY",
+        to_char(SUM((NVL(przydzial_myszy,0)+NVL(myszy_extra,0)))) "SUMA"
+FROM Kocury));
+
+--b
