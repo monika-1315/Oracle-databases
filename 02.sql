@@ -49,10 +49,10 @@ FROM (SELECT imie szefu, CONNECT_BY_ROOT imie Im, CONNECT_BY_ROOT funkcja Fun, l
 
 --c
 SELECT CONNECT_BY_ROOT imie "Imie ", '|' " ", CONNECT_BY_ROOT funkcja "Funkcja ", 
-    CASE LENGTH(SUBSTR(SYS_CONNECT_BY_PATH(RPAD(imie,8),'| '),11))
-    WHEN 30 THEN SUBSTR(SYS_CONNECT_BY_PATH(RPAD(imie,8),'| '),11) 
-    ELSE SUBSTR(SYS_CONNECT_BY_PATH(RPAD(imie,8),'| '),11) || '|'
-    END "Imiona kolejnych szefow"
+        CASE LENGTH(SUBSTR(SYS_CONNECT_BY_PATH(RPAD(imie,8),'| '),11))
+        WHEN 30 THEN SUBSTR(SYS_CONNECT_BY_PATH(RPAD(imie,8),'| '),11) 
+        ELSE SUBSTR(SYS_CONNECT_BY_PATH(RPAD(imie,8),'| '),11) || '|'
+        END "Imiona kolejnych szefow"
     FROM Kocury k
     WHERE imie='MRUCZEK'
     CONNECT BY  pseudo=PRIOR szef
