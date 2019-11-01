@@ -15,7 +15,7 @@ SELECT k1.imie, k1.w_stadku_od "POLUJE OD"
     
 --Zad19
 --a
-SELECT k1.imie, k1.funkcja, k2.imie "Szef1", k3.imie "Szef2", k4.imie "Szef3"
+SELECT k1.imie, k1.funkcja, k2.imie "Szef1", DECODE(k3.imie, null, ' ',k3.imie) "Szef2", DECODE(k4.imie, null, ' ',k4.imie) "Szef3"
     FROM Kocury k1 JOIN Kocury k2 
     ON k1.szef = k2.pseudo
     LEFT JOIN Kocury k3 ON k2.szef=k3.pseudo
@@ -23,9 +23,41 @@ SELECT k1.imie, k1.funkcja, k2.imie "Szef1", k3.imie "Szef2", k4.imie "Szef3"
     WHERE k1.funkcja IN ('KOT', 'MILUSIA');
     
 --b
---SELECT imie, funkcja, 
+SELECT *
+FROM (SELECT imie szefu, CONNECT_BY_ROOT imie "Imie", CONNECT_BY_ROOT funkcja "Funkcja", level lvl
+        FROM Kocury k
+        CONNECT BY  pseudo=PRIOR szef
+        START WITH funkcja IN ('KOT','MILUSIA'))
+    PIVOT
+    (MIN (szefu)
+    FOR lvl
+    IN (2 "Szef 1",
+        3 "Szef 2",
+        4 "Szef 3"));
+        
+SELECT Im "Imie", Fun "Funkcja", NVL(Szef1,' ') "Szef 1", NVL(Szef2, ' ') "Szef 2", NVL(Szef3, ' ') "Szef 3"
+FROM (SELECT imie szefu, CONNECT_BY_ROOT imie Im, CONNECT_BY_ROOT funkcja Fun, level lvl
+        FROM Kocury k
+        CONNECT BY  pseudo=PRIOR szef
+        START WITH funkcja IN ('KOT','MILUSIA'))
+    PIVOT
+    (MIN (szefu)
+    FOR lvl
+    IN (2 Szef1,
+        3 Szef2,
+        4 Szef3));
 
-
+--c
+SELECT CONNECT_BY_ROOT imie "Imie ", '|' " ", CONNECT_BY_ROOT funkcja "Funkcja ", 
+    CASE LENGTH(SUBSTR(SYS_CONNECT_BY_PATH(RPAD(imie,8),'| '),11))
+    WHEN 30 THEN SUBSTR(SYS_CONNECT_BY_PATH(RPAD(imie,8),'| '),11) 
+    ELSE SUBSTR(SYS_CONNECT_BY_PATH(RPAD(imie,8),'| '),11) || '|'
+    END "Imiona kolejnych szefow"
+    FROM Kocury k
+    WHERE imie='MRUCZEK'
+    CONNECT BY  pseudo=PRIOR szef
+    START WITH funkcja IN ('KOT','MILUSIA');
+    
 --Zad20
 SELECT k.imie "Imie kotki", b.nazwa "Nazwa bandy", w.imie_wroga "Imie wroga", w.stopien_wrogosci "Ocena wroga", wk.data_incydentu "Data inc."
     FROM Kocury k JOIN Bandy b ON k.nr_bandy=b.nr_bandy AND plec='D'
