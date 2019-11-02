@@ -352,20 +352,27 @@ FROM (SELECT *
         GROUP BY nr_bandy, plec) sel2
 ON sel1.nr_bandy=sel2.nr_bandy AND sel1.plec=sel2.plec
 
+UNION ALL (SELECT '-----------------', '------', '----', '---------', '---------', '---------', '---------', '---------', '---------', '---------', '-------' FROM dual)
 UNION ALL
-(SELECT '-----------------', '------', '----', '---------', '---------', '---------', '---------', '---------', '---------', '---------', '-------' FROM dual)
-UNION ALL
-(SELECT 'ZJADA RAZEM', ' ', '  ',
-        to_char(SUM(DECODE(funkcja, 'SZEFUNIO',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "SZEFUNIO",
-        to_char(SUM(DECODE(funkcja, 'BANDZIOR',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "BANDZIOR",
-        to_char(SUM(DECODE(funkcja, 'LOWCZY',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "LOWCZY",
-        to_char(SUM(DECODE(funkcja, 'LAPACZ',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "LAPACZ",
-        to_char(SUM(DECODE(funkcja, 'KOT',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "KOT",
-        to_char(SUM(DECODE(funkcja, 'MILUSIA',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "MILUSIA",
-        to_char(SUM(DECODE(funkcja, 'DZIELCZY',(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)),0))) "DZIELCZY",
-        to_char(SUM((NVL(przydzial_myszy,0)+NVL(myszy_extra,0)))) "SUMA"
-FROM Kocury)
-;
+(SELECT nazwa_bandy "NAZWA BANDY", plec_ plec, ile, 
+        to_char(NVL(szefunio,0)) "SZEFUNIO", to_char(NVL(bandzior,0)) "BANDZIOR", to_char(NVL(lowczy,0)) "LOWCZY", to_char(NVL(lapacz, 0))"LAPACZ" , 
+        to_char(NVL(kot,0))"KOT", to_char(NVL(milusia,0)) "MILUSIA", to_char(NVL(dzielczy,0))"DZIELCZY", to_char(suma) "SUMA"
+FROM
+    (SELECT 'ZJADA RAZEM' nazwa_bandy, ' ' plec_, ' ' ile, NVL(k.przydzial_myszy,0)+NVL(k.myszy_extra,0) przydzialy, k.funkcja fun,
+            (SELECT SUM((NVL(przydzial_myszy,0)+NVL(myszy_extra,0))) FROM Kocury) suma
+        FROM Kocury k)
+        PIVOT
+            (SUM (przydzialy)
+            FOR fun
+            IN ('SZEFUNIO' szefunio,
+                'BANDZIOR' bandzior,
+                'LOWCZY' lowczy,
+                'LAPACZ' lapacz,
+                'KOT' KOT,
+                'MILUSIA' milusia,
+                'DZIELCZY' dzielczy)
+            )
+);
 
  
  
