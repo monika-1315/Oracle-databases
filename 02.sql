@@ -93,11 +93,11 @@ SELECT * FROM (
 SELECT imie, 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) "DAWKA ROCZNA", 'powyzej 864' dawka
     FROM Kocury
     WHERE 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))>864 AND myszy_extra IS NOT NULL
-UNION
+UNION ALL
 SELECT imie, 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)), '864'
     FROM Kocury
     WHERE 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))=864 AND myszy_extra IS NOT NULL
-UNION
+UNION ALL
 SELECT imie, 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0)) dr, 'ponizej 864'
     FROM Kocury
     WHERE 12*(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))<864 AND myszy_extra IS NOT NULL)
@@ -138,8 +138,8 @@ WHERE k.funkcja!='SZEFUNIO' AND (sre<=ALL (SELECT ROUND(AVG(NVL(przydzial_myszy,
 --a
 SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada 
         FROM Kocury K
-    WHERE &n> (SELECT COUNT (pseudo)
-            FROM Kocury 
+    WHERE &n> (SELECT  COUNT( DISTINCT NVL(przydzial_myszy,0)+NVL(myszy_extra,0))
+            FROM  Kocury 
             WHERE NVL(przydzial_myszy,0)+NVL(myszy_extra,0)>NVL(K.przydzial_myszy,0)+NVL(K.myszy_extra,0))
     ORDER BY 2 DESC;      
 --b
@@ -148,7 +148,7 @@ WITH Zj AS (SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada
         ORDER BY 2 desc)
 SELECT pseudo, zjada
 FROM Zj
-    WHERE zjada IN (SELECT DISTINCT zjada from Zj WHERE rownum<=&n);
+    WHERE zjada IN (SELECT * FROM (SELECT DISTINCT zjada from Zj ORDER BY zjada DESC) WHERE rownum<=&n);
     
 --c
 WITH Koc AS
@@ -186,7 +186,7 @@ SELECT rok, wstapienia "LICZBA WSTAPIEN"
                             FROM Liczby
                         WHERE pozycja = (SELECT pozycja FROM Liczby WHERE wstapienia= (SELECT av FROM Srednia))-1
                             OR pozycja = (SELECT pozycja FROM Liczby WHERE wstapienia= (SELECT av FROM Srednia))+1)
-    UNION SELECT * FROM Srednia
+    UNION ALL SELECT * FROM Srednia
     ORDER BY 2;
             
 --Zad29
