@@ -64,12 +64,11 @@ SELECT k.imie "Imie kotki", b.nazwa "Nazwa bandy", w.imie_wroga "Imie wroga", w.
         JOIN Wrogowie_Kocurow wk ON k.pseudo=wk.pseudo AND data_incydentu>'2007-01-01'
         JOIN wrogowie w ON w.imie_wroga=wk.imie_wroga;
         
---Zad21
-SELECT b.nazwa "Nazwa bandy", 
-(SELECT COUNT(DISTINCT wk.pseudo) FROM Kocury k JOIN wrogowie_kocurow wk ON wk.pseudo=k.pseudo
-    WHERE k.nr_bandy=b.nr_bandy GROUP BY k.nr_bandy) "Koty z wrogami"
-    FROM Bandy b;
-
+--Zad21    
+SELECT b.nazwa "Nazwa bandy", COUNT(DISTINCT wk.pseudo) "Koty z wrogami"
+    FROM Kocury k JOIN wrogowie_kocurow wk ON wk.pseudo=k.pseudo
+        JOIN Bandy b ON k.nr_bandy=b.nr_bandy
+    WHERE k.nr_bandy=b.nr_bandy GROUP BY b.nazwa;
 
 SELECT b.nazwa "Nazwa bandy", sel.kw "Koty z wrogami"
 FROM bandy b JOIN
@@ -133,7 +132,14 @@ WHERE k.funkcja!='SZEFUNIO' AND (sre<=ALL (SELECT ROUND(AVG(NVL(przydzial_myszy,
         FROM Kocury WHERE funkcja!='SZEFUNIO' GROUP BY funkcja)
             OR sre>=ALL     (SELECT ROUND(AVG(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))) sre
         FROM Kocury WHERE funkcja!='SZEFUNIO' GROUP BY funkcja));
-        
+    
+WITH Sr AS 
+    (SELECT ROUND(AVG(NVL(przydzial_myszy,0)+NVL(myszy_extra,0))) sre, funkcja
+        FROM Kocury
+        GROUP BY funkcja)
+SELECT DISTINCT funkcja "Funkcja", sre "Srednio najw. i najm. myszy"
+FROM Sr
+WHERE funkcja!='SZEFUNIO' AND (sre = (SELECT MIN(sre) FROM Sr) OR sre = (SELECT MAX(sre) FROM Sr WHERE funkcja!='SZEFUNIO'));
 --Zad27
 --a
 SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra,0) zjada 
@@ -374,5 +380,51 @@ FROM
             )
 );
 
- 
- 
+ /** Wyswietliæ sredni przydzial myszy kotów p³ci mêskiej którzy nie maj¹ wrogow i s¹ w bandzie której sredni przydzial myszy przekracza 55.
+Podzapytanie ma byæ poza from i poza select, nie stosowaæ polaczenia pionowego ani widokow.
+ */
+SELECT avg(NVL(PRZYDZIAL_MYSZY,0))
+from KOCURY kocury left join WROGOWIE_KOCUROW WK on KOCURY.PSEUDO = WK.PSEUDO
+where PLEC = 'M' AND IMIE_WROGA is null 
+    and NR_BANDY in (SELECT NR_BANDY from KOCURY 
+                        --where plec='M' 
+                        group by NR_BANDY having avg(PRZYDZIAL_MYSZY)>55)
+;
+
+/**Sposrod kotow tej samej plci nale¿¹cych do tych samych band co (2 pseudonimy placek, rura) albo do band gdzie sredni przydzial myszy jest
+wiêkszy od 50 i dostaj¹ 10% myszy wiêcej ni¿ min_myszy w ich bandie wyznaczyæ maksymalny przydzial myszy i iloœæ kotow które nie dostaj¹ myszy-ekstra
+uzyc zlaczenia poziomego, podzapytania (poza select i from), grupoanie, bez zlaczenia pionowego
+???*/
+SELECT MAX(PRZYDZIAL_MYSZY), COUNT(*)-count(MYSZY_ExTRA)
+FROM KOCURY left join BANDY B on KOCURY.NR_BANDY = B.NR_BANDY
+where B.NR_BANDY in (SELECT NR_BANDY from KOCURY join BANDY using(nr_bandy) where PSEUDO in ('PLACEK','RURA')) OR
+                            B.NR_BANDY in (SELECT b2.NR_BANDY from KOCURY left join BANDY B2 on KOCURY.NR_BANDY = B2.NR_BANDY
+                                          having avg(PRZYDZIAL_MYSZY)>50);
+
+/***Podaj pseudo i nr bandy kocurów p³ci mêskiej którzy nie posiadaj¹ wrogów oraz nale¿¹ce do band gdzie œredni przydzia³ myszy kotów o p³ci
+mêskiej jest powy¿ej 55. Wykorzystaæ podzapytanie, (?Laczenie?) poziome oraz grupowanie.*/
+SELECT KOCURY.PSEUDO, B.NR_BANDY
+FROM KOCURY left join WROGOWIE_KOCUROW KOCUROW on KOCURY.PSEUDO = KOCUROW.PSEUDO left join BANDY B on KOCURY.NR_BANDY = B.NR_BANDY
+WHERE IMIE_WROGA is null AND PLEC = 'M' AND B.NR_BANDY in (SELECT b2.NR_BANDY from KOCURy left join BANDY b2 on KOCURY.nr_bandy=b2.nr_bandy
+                                                          WHERE PLEC = 'M'
+                                                          group by b2.NR_BANDY
+                                                          having avg(PRZYDZIAL_MYSZY)>55);
+
+/** za³o¿yæ ¿e w bazie jest dodatkowa tabela myszy gdzie sa atrybuty: nr_myszy, waga_myszy, pseudo_zjadacza,
+pseudo_lapacza waga myszy jest obowiaskowa i pseudo_lapacza.
+znalesc bandy ktore maja wiecej niz 4 czlonkow i których cz³onkowie zjedli
+wiecej myszy ni¿ zlapali*/
+CREATE TABLE MYSZY (nr_myszy NUMBER(2), waga_myszy NUMBER(3), pseudo_zjadacza VARCHAR2(15),
+pseudo_lapacza VARCHAR2(15));
+
+SELECT b.nazwa
+FROM Bandy b
+WHERE b.nr_bandy IN
+    (SELECT nr_bandy 
+    FROM Kocury k 
+    LEFT JOIN (SELECT pseudo_zjadacza FROM Myszy)m1 ON k.pseudo=m1.pseudo_zjadacza
+    LEFT JOIN (SELECT pseudo_lapacza FROM Myszy)m2 ON k.pseudo=m2.pseudo_lapacza
+    GROUP BY k.nr_bandy, k.pseudo
+    HAVING COUNT ( DISTINCT k.pseudo)>4 AND COUNT(pseudo_zjadacza)>COUNT(pseudo_lapacza));
+
+DROP TABLE myszy;
