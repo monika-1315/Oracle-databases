@@ -1,0 +1,15 @@
+DECLARE 
+    CURSOR koty IS 
+                SELECT ROWNUM nr, RPAD(pseudo, 9, ' ') pseudo, LPAD(zje, 3, ' ') zje
+                    FROM (SELECT pseudo, NVL(myszy_extra,0)+NVL(przydzial_myszy, 0) zje
+                            FROM Kocury
+                            ORDER BY zje DESC)
+                    WHERE ROWNUM<=5;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Nr Pseudonim Zjada');
+    DBMS_OUTPUT.PUT_LINE('------------------');
+    FOR kot IN koty
+    LOOP
+        DBMS_OUTPUT.PUT_LINE(kot.nr || '  ' || kot.pseudo || '  ' || kot.zje);
+    END LOOP;
+END;
