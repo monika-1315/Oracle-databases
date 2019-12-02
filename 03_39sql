@@ -1,0 +1,15 @@
+DECLARE 
+    nr_bandy Bandy.nr_bandy%TYPE := &numer_bandy;
+    nazwa Bandy.nazwa%TYPE := '&nazwa_bandy';
+    teren Bandy.teren%TYPE := '&teren_polowan';
+    EXCEPTION nr_lt_0;
+BEGIN
+    IF nr_bandy<=0 THEN RAISE nr_lt_0;
+    END IF;
+    null;
+EXCEPTION
+    WHEN nr_lt_0 THEN
+        DBMS_OUTPUT.PUT_LINE(nr_bandy || 'Numer bandy nie mo¿e byæ mniejszy  od 0!');
+    WHEN OTHERS
+        THEN DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
