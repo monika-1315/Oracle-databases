@@ -1,0 +1,56 @@
+DECLARE
+    max_p NUMBER(2):= &max_liczba_przelozonych;
+    max_lvl NUMBER(2) default 0;
+    dyn_sql VARCHAR2(1000);
+    TYPE typ_curs IS REF CURSOR;
+    kursor typ_curs;
+    dyn_pl_sql VARCHAR2(1000);
+BEGIN
+    SELECT MAX(lvl) INTO max_lvl
+        FROM (SELECT imie szefu, CONNECT_BY_ROOT imie "Imie", level lvl
+        FROM Kocury k
+        CONNECT BY  pseudo=PRIOR szef
+        START WITH funkcja IN ('KOT','MILUSIA'));
+    IF max_p<max_lvl THEN
+        max_lvl:=max_p;
+    END IF;
+    
+    DBMS_OUTPUT.PUT('Imie       | Szef1      ');
+    FOR i in 2..max_lvl-1
+    LOOP
+         DBMS_OUTPUT.PUT('| Szef' || TO_CHAR(i) || '      ');
+    END LOOP;
+    DBMS_OUTPUT.PUT_LINE('| ');
+    
+    dyn_sql:= 'SELECT RPAD(k.imie,10, '' '') imie, RPAD(k1.imie, 10, '' '') szef1';
+    FOR i in 2..max_lvl
+    LOOP
+        dyn_sql:= dyn_sql || ', RPAD(DECODE(k' || TO_CHAR(i) || '.imie, null, '' '', k' || TO_CHAR(i) || '.imie),10, '' '') szef' || TO_CHAR(i) ;
+    END LOOP;
+    dyn_sql:= dyn_sql || ' FROM Kocury k JOIN Kocury k1 ON k.szef=k1.pseudo ';
+    FOR i in 2..max_lvl
+    LOOP
+        dyn_sql:= dyn_sql || 'LEFT JOIN Kocury k' || TO_CHAR(i) || ' ON k' || TO_CHAR(i-1) || '.szef=k' || TO_CHAR(i) || '.pseudo ';
+    END LOOP;
+    dyn_sql:= dyn_sql || 'WHERE k.funkcja IN (''KOT'', ''MILUSIA'');';
+    --DBMS_OUTPUT.PUT_LINE(dyn_sql);
+    dyn_pl_sql:='DECLARE CURSOR szefowie IS ' || dyn_sql || '
+            BEGIN
+                FOR s IN szefowie
+                LOOP
+                    DBMS_OUTPUT.PUT_LINE(s.imie || '' | '' || s.szef1';
+    FOR i in 2..max_lvl
+    LOOP
+        dyn_pl_sql:= dyn_pl_sql || ' || '' | '' || s.szef' || TO_CHAR(i);
+    END LOOP;
+    dyn_pl_sql:= dyn_pl_sql || ');
+          END LOOP;
+        END;';
+    --DBMS_OUTPUT.PUT_LINE(dyn_pl_sql);
+   EXECUTE IMMEDIATE dyn_pl_sql;
+
+
+EXCEPTION
+    WHEN OTHERS
+        THEN DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;

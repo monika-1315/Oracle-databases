@@ -12,4 +12,7 @@ BEGIN
     LOOP
         DBMS_OUTPUT.PUT_LINE(kot.nr || '  ' || kot.pseudo || '  ' || kot.zje);
     END LOOP;
+EXCEPTION
+    WHEN OTHERS
+    THEN DBMS_OUTPUT.PUT_LINE(SQLERRM);
 END;

@@ -33,6 +33,9 @@ BEGIN
         END LOOP;     
     END LOOP zew;
     DBMS_OUTPUT.PUT_LINE('Calk. przydzial w stadku ' || suma_przydzialow || ' Zmian - ' || podwyzki); 
+EXCEPTION
+    WHEN OTHERS
+    THEN DBMS_OUTPUT.PUT_LINE(SQLERRM);
 END;
 
 SELECT imie, przydzial_myszy "Myszki po podwyzce" FROM Kocury ORDER BY przydzial_myszy desc;
