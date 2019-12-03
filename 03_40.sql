@@ -1,8 +1,6 @@
-DECLARE 
-    nr_band Bandy.nr_bandy%TYPE := &numer_bandy;
+CREATE OR REPLACE PROCEDURE nowe_bandy (nr_band Bandy.nr_bandy%TYPE,nazwab Bandy.nazwa%TYPE, terenb Bandy.teren%TYPE)
+AS
     nr NUMBER(1);
-    nazwab Bandy.nazwa%TYPE := '&nazwa_bandy';
-    terenb Bandy.teren%TYPE := '&teren_polowan';
     nr_popr BOOLEAN:=false;
     nazw_popr BOOLEAN:=false;
     ter_popr BOOLEAN:=false;
@@ -39,7 +37,10 @@ EXCEPTION
     WHEN OTHERS
         THEN DBMS_OUTPUT.PUT_LINE(SQLERRM);
 END;
-/
 
+BEGIN
+nowe_bandy(&nr, '&nazwa', '&teren');
+END;
+/
 SELECT * FROM Bandy;
 ROLLBACK;
