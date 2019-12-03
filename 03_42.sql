@@ -21,8 +21,6 @@ BEGIN
     END IF;
 END BEFORE EACH ROW;
 AFTER STATEMENT IS
-myszy  Kocury.myszy_extra%TYPE;
-przydzial Kocury.przydzial_Myszy%TYPE;
 BEGIN
     FOR i in 1..increases.COUNT
     LOOP
@@ -45,3 +43,5 @@ UPDATE kocury
 SET przydzial_myszy=1.05*przydzial_myszy;
 SELECT * FROM Kocury;
 ROLLBACK;
+
+DROP TRIGGER wirus;
