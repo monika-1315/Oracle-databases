@@ -28,7 +28,6 @@ END;
 
 CREATE OR REPLACE TRIGGER after_ins 
 AFTER UPDATE OF przydzial_myszy ON Kocury
---WHEN (funkcja='MILUSIA')
 BEGIN
 IF wirusy.trigg THEN
     wirusy.trigg:=false;
