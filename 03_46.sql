@@ -36,6 +36,7 @@ BEGIN
     END IF;
 END;
 /
+
 UPDATE Kocury
 SET przydzial_myszy=0
 WHERE pseudo='TYGRYS';

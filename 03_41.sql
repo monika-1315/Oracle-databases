@@ -7,3 +7,7 @@ BEGIN
     SELECT MAX(nr_bandy) INTO nr_bandy FROM Bandy ;
     :NEW.nr_bandy:=nr_bandy+1;
 END;
+/
+INSERT INTO Bandy (nr_bandy, nazwa) VALUES (10, 'sd');
+SELECT * FROM Bandy;
+ROLLBACK;

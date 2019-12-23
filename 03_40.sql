@@ -37,6 +37,7 @@ EXCEPTION
     WHEN OTHERS
         THEN DBMS_OUTPUT.PUT_LINE(SQLERRM);
 END;
+/
 
 BEGIN
 nowe_bandy(&nr, '&nazwa', '&teren');

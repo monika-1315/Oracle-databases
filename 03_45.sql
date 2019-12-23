@@ -37,7 +37,6 @@ FOR EACH ROW
 WHEN (OLD.funkcja='MILUSIA' AND OLD.przydzial_myszy<NEW.przydzial_myszy)
 DECLARE
     dyn_sql VARCHAR2(500);
-    --CURSOR milusie IS SELECT pseudo FROM Kocury WHERE funkcja='MILUSIA';
 BEGIN
     IF (LOGIN_USER != 'TYGRYS') THEN
         dyn_sql:= 'INSERT ALL';

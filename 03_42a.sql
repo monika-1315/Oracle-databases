@@ -48,7 +48,6 @@ END;
 /
 
 SELECT * FROM Kocury;
---update KOCURY set PRZYDZIAL_MYSZY = (PRZYDZIAL_MYSZY +19) where FUNKCJA='MILUSIA';
 UPDATE kocury
 SET przydzial_myszy=1.9*przydzial_myszy;
 SELECT * FROM Kocury;
