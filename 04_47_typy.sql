@@ -24,7 +24,7 @@ CREATE OR REPLACE TYPE KOCURY_O AS OBJECT
 CREATE OR REPLACE TYPE BODY KOCURY_O AS
     MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2 IS
      BEGIN
-        RETURN imie || ', ' || O_plci() || ', ' || pseudo || funkcja;
+        RETURN imie || ', ' || O_plci() || ', pseudo:' || pseudo || ' funkcja: '||funkcja;
     END;
    MEMBER FUNCTION O_plci RETURN VARCHAR2 IS
           BEGIN
