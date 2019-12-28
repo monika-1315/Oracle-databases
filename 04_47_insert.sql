@@ -59,7 +59,33 @@ EXCEPTION
 END;
 /
 SELECT * FROM Incydenty;
-SELECT * FROM Wrogowie_kocurow;
 
-SELECT * FROM Plebs;
+--plebs
+DECLARE
+CURSOR koty IS SELECT  pseudo
+                    FROM (SELECT K.pseudo pseudo, K.Dochod_myszowy() FROM Kocury2 K ORDER BY K.Dochod_myszowy() ASC)
+                    WHERE ROWNUM<= (SELECT COUNT(*) FROM Kocury2)/2;
+dyn_sql VARCHAR2(1000);
+BEGIN
+    FOR pl IN koty
+    LOOP
+      dyn_sql:='DECLARE
+            kot REF Kocury_o;
+        BEGIN
+            SELECT REF(P) INTO kot FROM Kocury2 P WHERE P.pseudo='''|| pl.pseudo||''';
+            INSERT INTO Plebs VALUES
+                    (Plebs_O(kot, '''|| pl.pseudo || '''));
+            END;';
+       DBMS_OUTPUT.PUT_LINE(dyn_sql);
+       EXECUTE IMMEDIATE  dyn_sql;
+    END LOOP;
+    --COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+SELECT P.pseudo, P.kot.to_string() FROM Plebs P;
 SELECT * FROM Elita;
+
+
