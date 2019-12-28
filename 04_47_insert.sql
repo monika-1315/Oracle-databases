@@ -59,7 +59,7 @@ EXCEPTION
 END;
 /
 SELECT * FROM Incydenty;
-
+commit;
 --plebs
 DECLARE
 CURSOR koty IS SELECT  pseudo

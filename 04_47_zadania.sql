@@ -31,3 +31,77 @@ FROM Kocury2 k JOIN
     GROUP BY pseudo) sel
 ON k.pseudo = sel.pseudo
 WHERE sel.lw>1;
+
+--lista3
+--Zad35
+DECLARE 
+    przydzial Kocury2.przydzial_myszy%TYPE;
+    imie Kocury2.imie%TYPE;
+    miesiac NUMBER(3);
+    spelnia BOOLEAN:=FALSE;
+BEGIN
+    SELECT (NVL(przydzial_myszy,0)+NVL(myszy_extra,0)), imie, EXTRACT (MONTH FROM w_stadku_od)
+    INTO przydzial, imie, miesiac
+    FROM Kocury2
+    WHERE pseudo='&pseudo';
+    
+    IF (12*przydzial>700) THEN
+        DBMS_OUTPUT.PUT_LINE(imie || ' - calkowity roczny przydzial myszy >700'); 
+        spelnia:=TRUE;
+    END IF;
+    IF (imie LIKE '%A%') THEN
+        DBMS_OUTPUT.PUT_LINE(imie || ' - imiê zawiera litere A');
+        spelnia:=TRUE;
+    END IF;
+    IF (miesiac=1) THEN
+        DBMS_OUTPUT.PUT_LINE(imie || ' - styczeñ jest miesiacem przystapienia do stada');
+        spelnia:=TRUE;
+    END IF;
+    IF(NOT spelnia) THEN
+        DBMS_OUTPUT.PUT_LINE(imie || ' - nie odpowiada kryteriom');
+    END IF;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Nie znaleziono kota');
+    WHEN OTHERS
+    THEN DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+--Zad44
+CREATE OR REPLACE FUNCTION podatek(pseudonim VARCHAR2) RETURN NUMBER AS
+podatek NUMBER(3) DEFAULT 0;
+przychody NUMBER(3);
+check_cnt NUMBER(2);
+funkcja Kocury2.funkcja%TYPE;
+BEGIN 
+    SELECT K.dochod_myszowy(), K.funkcja INTO przychody, funkcja
+        FROM Kocury2 K WHERE K.pseudo=pseudonim;
+    podatek:= CEIL(przychody*0.05);
+    SELECT COUNT(K.szef.pseudo) INTO check_cnt 
+        FROM Kocury2 K WHERE K.szef.pseudo=pseudonim;
+    IF (check_cnt=0) THEN
+        podatek:= podatek + 2;
+    END IF;
+    SELECT COUNT(pseudo) INTO check_cnt FROM Incydenty  WHERE pseudo=pseudonim;
+    IF (check_cnt=0) THEN
+        podatek:= podatek + 1;
+    END IF;
+    IF (funkcja='MILUSIA') THEN
+        podatek:= 1.1*podatek;
+    END IF;
+    IF (przychody<podatek) THEN
+        podatek:=przychody;
+    END IF;
+    RETURN podatek;
+END podatek;
+/
+DECLARE 
+    CURSOR koty IS SELECT pseudo FROM Kocury2;
+BEGIN
+ DBMS_OUTPUT.PUT_LINE('Podatki:');
+    FOR kot in koty
+    LOOP
+    DBMS_OUTPUT.PUT_LINE(RPAD(kot.pseudo,10) || ' ' || podatek(kot.pseudo));
+    END LOOP;
+END;
+/
