@@ -63,7 +63,7 @@ SELECT * FROM Incydenty;
 --plebs
 DECLARE
 CURSOR koty IS SELECT  pseudo
-                    FROM (SELECT K.pseudo pseudo, K.Dochod_myszowy() FROM Kocury2 K ORDER BY K.Dochod_myszowy() ASC)
+                    FROM (SELECT K.pseudo pseudo FROM Kocury2 K ORDER BY K.Dochod_myszowy() ASC)
                     WHERE ROWNUM<= (SELECT COUNT(*) FROM Kocury2)/2;
 dyn_sql VARCHAR2(1000);
 BEGIN
@@ -79,13 +79,40 @@ BEGIN
        DBMS_OUTPUT.PUT_LINE(dyn_sql);
        EXECUTE IMMEDIATE  dyn_sql;
     END LOOP;
-    --COMMIT;
 EXCEPTION
     WHEN OTHERS THEN
     DBMS_OUTPUT.PUT_LINE(SQLERRM);
 END;
 /
 SELECT P.pseudo, P.kot.to_string() FROM Plebs P;
-SELECT * FROM Elita;
 
-
+--elita
+DECLARE
+CURSOR koty IS SELECT  pseudo
+                    FROM (SELECT K.pseudo pseudo FROM Kocury2 K ORDER BY K.Dochod_myszowy() DESC)
+                    WHERE ROWNUM<= (SELECT COUNT(*) FROM Kocury2)/2;
+dyn_sql VARCHAR2(1000);
+num NUMBER:=1;
+BEGIN
+    FOR pl IN koty
+    LOOP
+      dyn_sql:='DECLARE
+            kot REF Kocury_o;
+            sluga REF Plebs_o;
+        BEGIN
+            SELECT REF(P) INTO kot FROM Kocury2 P WHERE P.pseudo='''|| pl.pseudo||''';
+            SELECT plebs INTO sluga FROM (SELECT REF(P) plebs, rownum num  FROM Plebs P ) WHERE NUM='||num||';
+            INSERT INTO Elita VALUES
+                    (Elita_O(kot, sluga,'''|| pl.pseudo || '''));
+        END;';
+       DBMS_OUTPUT.PUT_LINE(dyn_sql);
+       EXECUTE IMMEDIATE  dyn_sql;
+       num:=num+1;
+    END LOOP;
+EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+--DELETE FROM ELITA;
+SELECT E.kot.pseudo, E.sluga.pseudo, E.pseudo FROM Elita E;
