@@ -115,4 +115,53 @@ EXCEPTION
 END;
 /
 --DELETE FROM ELITA;
-SELECT E.kot.pseudo, E.sluga.pseudo, E.pseudo FROM Elita E;
+SELECT E.kot.pseudo, E.sluga.pseudo, E.pseudo, E.kot.dochod_myszowy() FROM Elita E;
+
+--konto
+DECLARE
+CURSOR koty IS SELECT  pseudo FROM Elita;
+dyn_sql VARCHAR2(1000);
+BEGIN
+    FOR pl IN koty
+    LOOP
+      dyn_sql:='DECLARE
+            kot REF Elita_o;
+            dataw DATE:=SYSDATE;
+        BEGIN
+            SELECT REF(P) INTO kot FROM Elita P WHERE P.pseudo='''|| pl.pseudo||''';
+            INSERT INTO Konto VALUES
+                    (Konto_myszy_O(nr_myszy.NEXTVAL, dataw, NULL, kot));
+        END;';
+       DBMS_OUTPUT.PUT_LINE(dyn_sql);
+       EXECUTE IMMEDIATE  dyn_sql;
+    END LOOP;
+EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+DECLARE
+CURSOR koty IS SELECT E.pseudo FROM Elita E WHERE E.kot.dochod_myszowy()>70 ;
+dyn_sql VARCHAR2(1000);
+BEGIN
+    FOR pl IN koty
+    LOOP
+      dyn_sql:='DECLARE
+            kot REF Elita_o;
+            dataw DATE:=SYSDATE;
+        BEGIN
+            SELECT REF(P) INTO kot FROM Elita P WHERE P.pseudo='''|| pl.pseudo||''';
+            INSERT INTO Konto VALUES
+                    (Konto_myszy_O(nr_myszy.NEXTVAL, dataw, NULL, kot));
+        END;';
+       DBMS_OUTPUT.PUT_LINE(dyn_sql);
+       EXECUTE IMMEDIATE  dyn_sql;
+    END LOOP;
+EXCEPTION
+    WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+SELECT K.nr_myszy, K.data_wprowadzenia, K.data_usuniecia, K.wlasciciel.pseudo FROM Konto K;
+--UPDATE Konto SET Data_usuniecia=SYSDATE;

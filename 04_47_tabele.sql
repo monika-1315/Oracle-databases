@@ -22,6 +22,8 @@ CREATE TABLE Konto OF KONTO_MYSZY_O
  wlasciciel SCOPE IS Elita,
  CONSTRAINT konto_pk PRIMARY KEY(nr_myszy));
 -- DROP TABLE Konto;
+
+CREATE SEQUENCE nr_myszy;
  
 CREATE TABLE Incydenty OF INCYDENTY_O
 (data_incydentu NOT NULL,
