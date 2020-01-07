@@ -40,9 +40,9 @@ DECLARE
     miesiac NUMBER(3);
     spelnia BOOLEAN:=FALSE;
 BEGIN
-    SELECT (NVL(przydzial_myszy,0)+NVL(myszy_extra,0)), imie, EXTRACT (MONTH FROM w_stadku_od)
+    SELECT K.Dochod_myszowy(), imie, EXTRACT (MONTH FROM w_stadku_od)
     INTO przydzial, imie, miesiac
-    FROM Kocury2
+    FROM Kocury2 K
     WHERE pseudo='&pseudo';
     
     IF (12*przydzial>700) THEN
