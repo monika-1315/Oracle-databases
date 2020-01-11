@@ -62,3 +62,65 @@ END;
 SELECT * FROM Myszy_Lola;
 --DELETE FROM Myszy_Lola WHERE data_zlowienia= '2020-01-21';
 SELECT * FROM Myszy WHERE data_zlowienia= '2020-01-21';
+
+
+CREATE OR REPLACE PROCEDURE wyplacaj
+AS 
+    TYPE tp IS TABLE OF Kocury.pseudo%TYPE;
+    tab_pseudo tp:=tp();
+    TYPE tm IS TABLE OF NUMBER(3);
+    tab_myszy tm:=tm();
+    TYPE tn IS TABLE OF NUMBER(7);
+    tab_nry tn:=tn();
+    dzien_wyplaty DATE:=(NEXT_DAY(LAST_DAY(SYSDATE)-7, 'Œroda'));
+    TYPE tps IS TABLE OF Kocury.pseudo%TYPE INDEX BY BINARY_INTEGER;
+    tab_zjadaczy tps;
+    liczba_najedzonych NUMBER(2):=0;
+    ind_zjadacza NUMBER(2):=1;
+BEGIN
+    SELECT pseudo, NVL(przydzial_myszy,0)+NVL(myszy_extra, 0)
+            BULK COLLECT INTO tab_pseudo, tab_myszy
+            FROM Kocury CONNECT BY  PRIOR pseudo=szef 
+            START WITH szef IS NULL
+            ORDER BY level;
+    SELECT nr_myszy
+        BULK COLLECT INTO tab_nry
+        FROM Myszy WHERE Data_Wydania IS NULL;
+    
+    Dbms_Output.put_Line(tab_nry.COUNT);
+    FOR i IN 1..tab_nry.COUNT
+    LOOP
+        WHILE tab_myszy(ind_zjadacza)=0 AND liczba_najedzonych<tab_pseudo.COUNT
+        LOOP
+            liczba_najedzonych:= liczba_najedzonych+1;
+            ind_zjadacza:= MOD(ind_zjadacza+1, tab_pseudo.COUNT)+1;   
+        END LOOP;
+        
+        IF liczba_najedzonych=tab_pseudo.COUNT THEN
+            tab_zjadaczy(i):='TYGRYS';
+        ELSE
+            ind_zjadacza:= MOD(ind_zjadacza+1, tab_pseudo.COUNT)+1;
+            tab_zjadaczy(i):=tab_pseudo(ind_zjadacza);
+            tab_myszy(ind_zjadacza):=tab_myszy(ind_zjadacza)-1;
+        END IF;       
+        
+    END LOOP;
+    
+    FORALL i IN 1..tab_nry.COUNT SAVE EXCEPTIONS
+        EXECUTE IMMEDIATE 
+        'UPDATE Myszy SET data_wydania=''' || dzien_wyplaty|| ''', zjadacz=:ps
+        WHERE nr_myszy=:nr'
+        USING tab_zjadaczy(i), tab_nry(i);
+--EXCEPTION
+--     WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+BEGIN
+    wyplacaj;
+END;
+/
+SELECT * FROM Myszy WHERE EXTRACT(YEAR FROM data_wydania)=2020  ORDER BY nr_myszy ASC;
+SELECT COUNT(*) FROM Myszy WHERE EXTRACT(YEAR FROM data_wydania)=2020 AND zjadacz!='TYGRYS';
+ROLLBACK;
+SELECT * FROM Myszy WHERE data_wydania IS NULL;
