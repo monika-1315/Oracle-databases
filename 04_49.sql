@@ -5,13 +5,14 @@ BEGIN
         lowca VARCHAR2(15) CONSTRAINT m_lowca_fk REFERENCES Kocury(pseudo),
         zjadacz VARCHAR2(15) CONSTRAINT m_zjadacz_fk REFERENCES Kocury(pseudo),
         waga_myszy NUMBER(3) CONSTRAINT waga_myszy_ogr CHECK (waga_myszy BETWEEN 10 AND 120),
-        data_zlowienia DATE DEFAULT SYSDATE,
+        data_zlowienia DATE CONSTRAINT dat_nn NOT NULL,
         data_wydania DATE,
          CONSTRAINT daty_popr CHECK (data_zlowienia <= data_wydania))';
 EXCEPTION
     WHEN OTHERS THEN DBMS_OUTPUT.PUT_LINE(SQLERRM);
 END;
 /
+CREATE SEQUENCE numery_myszy;
 --DROP TABLE myszy;
 
 ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD';
@@ -75,7 +76,7 @@ BEGIN
        -- DBMS_OUTPUT.PUT_LINE(myszki.COUNT);
         FORALL i IN 1..myszki.COUNT SAVE EXCEPTIONS 
             INSERT INTO Myszy(nr_myszy, lowca, zjadacz, waga_myszy,data_zlowienia, data_wydania) 
-            VALUES(myszki(i).nr_myszy, myszki(i).lowca, myszki(i).zjadacz, myszki(i).waga_myszy, myszki(i).data_zlowienia, myszki(i).data_wydania);
+            VALUES(numery_myszy.NEXTVAL, myszki(i).lowca, myszki(i).zjadacz, myszki(i).waga_myszy, myszki(i).data_zlowienia, myszki(i).data_wydania);
     
 EXCEPTION
     WHEN OTHERS THEN 
