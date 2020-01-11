@@ -60,103 +60,6 @@ END;
 /
 SELECT * FROM Konto_myszy;
 
----------------------------------------------------------------------------------------------------------------
-----typy
-CREATE OR REPLACE TYPE KOCURY_T AS OBJECT
-  (imie VARCHAR2(15),
-   plec VARCHAR2(1),
-   pseudo VARCHAR2(15), 
-   funkcja VARCHAR2(10),
-   szef VARCHAR2(1),
-   w_stadku_od DATE,
-   przydzial_myszy NUMBER(3),
-   myszy_extra NUMBER(3),
-   nr_bandy NUMBER(2),
-  MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2,
-  MEMBER FUNCTION O_plci RETURN VARCHAR2,
-  MEMBER FUNCTION Dochod_myszowy RETURN NUMBER)
-/
-CREATE OR REPLACE TYPE BODY KOCURY_T AS
-    MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2 IS
-     BEGIN
-        RETURN imie || ', ' || O_plci() || ', pseudo:' || pseudo || ' funkcja:'||funkcja ||', zjada:'||SELF.Dochod_myszowy();
-    END;
-   MEMBER FUNCTION O_plci RETURN VARCHAR2 IS
-          BEGIN
-           RETURN CASE NVL(plec,'N')
-                   WHEN 'M' THEN 'Kocur'
-                   WHEN 'D' THEN'Kotka'
-                   WHEN 'N' THEN 'Nieznana'
-                   ELSE 'Bledna'
-                  END;
-          END;
-   MEMBER FUNCTION Dochod_myszowy RETURN NUMBER IS
-          BEGIN
-           RETURN NVL(przydzial_myszy,0)+
-                  NVL(myszy_extra,0);
-          END;
-  END;
-  /
-
-CREATE OR REPLACE TYPE PLEBS_T AS OBJECT
-(pseudo VARCHAR2(15),
- MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2)
-FINAL;
-/
-CREATE OR REPLACE TYPE BODY PLEBS_T AS
-MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2 IS
-    kott Kocury%ROWTYPE;
-    BEGIN
-    SELECT * INTO kott FROM Kocury WHERE pseudo=SELF.pseudo;
-    RETURN kott.imie || ' ' || kott.pseudo || ' '|| kott.funkcja;
-    END;
-END;
-/
-CREATE OR REPLACE TYPE ELITA_T AS OBJECT
-( pseudo VARCHAR2(15),
- sluga VARCHAR2(15),
- MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2)
-FINAL;
-/
-CREATE OR REPLACE TYPE BODY ELITA_T AS
-MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2 IS
-    kott Kocury%ROWTYPE;
-    BEGIN
-    SELECT * INTO kott FROM Kocury WHERE pseudo=SELF.pseudo;
-    RETURN kott.imie || ' ' || kott.pseudo || ' '|| kott.funkcja || ' sluga: ' || SELF.sluga;
-    END;
-END;
-/
-CREATE OR REPLACE TYPE KONTO_MYSZY_T AS OBJECT
-(nr_myszy NUMBER(5),
- data_wprowadzenia DATE,
- data_usuniecia DATE,
- wlasciciel VARCHAR(15),
- MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2);
- /
-CREATE OR REPLACE TYPE BODY KONTO_MYSZY_T AS
- MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2 IS
-    BEGIN
-     RETURN TO_CHAR(data_wprowadzenia) || ' ' || wlasciciel || ' '|| TO_CHAR(data_usuniecia);
-    END;
-END;
-/
-CREATE OR REPLACE TYPE INCYDENTY_T AS OBJECT
-( pseudo VARCHAR2(15),
-   imie_wroga VARCHAR2(15),
-   data_incydentu  DATE,
-   opis_incydentu VARCHAR2(50),
-   MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2);
-/
-
-CREATE OR REPLACE TYPE BODY INCYDENTY_T AS
-MAP MEMBER FUNCTION TO_STRING RETURN VARCHAR2 IS
-    BEGIN
-        RETURN pseudo ||' vs. ' || imie_wroga || ' ' || TO_CHAR(data_incydentu) || ' ' ||opis_incydentu;
-    END; 
-END;
-/
-
 ---------------------------------------------------------------
 --tworzenie widoków obiektowych
 CREATE OR REPLACE FORCE VIEW Kocury_p OF Kocury_o
@@ -166,3 +69,27 @@ WITH OBJECT IDENTIFIER (pseudo) AS
     FROM Kocury;
     
 SELECT * FROM Kocury_p;
+
+CREATE OR REPLACE VIEW Plebs_p OF Plebs_o
+WITH OBJECT IDENTIFIER (pseudo) AS
+    SELECT MAKE_REF(Kocury_p, pseudo) kot, pseudo
+    FROM Plebs_r;
+SELECT * FROM Plebs_p;
+
+CREATE OR REPLACE VIEW ELita_p OF Elita_O
+WITH OBJECT IDENTIFIER (pseudo) AS
+    SELECT MAKE_REF(Kocury_p, pseudo) kott, MAKE_REF(Plebs_p, sluga) sluga, pseudo
+    FROM Elita_r;
+SELECT * FROM Elita_p;
+
+CREATE OR REPLACE VIEW Konto_myszy_p OF Konto_myszy_o
+WITH OBJECT IDENTIFIER (nr_myszy) AS
+    SELECT nr_myszy, data_wprowadzenia, data_usuniecia, MAKE_REF(Elita_p, wlasciciel) wlasciciel
+    FROM Konto_myszy;
+SELECT nr_myszy, DEREF(wlasciciel).to_string() FROM Konto_myszy_p;
+
+CREATE OR REPLACE VIEW Incydenty_p OF Incydenty_o 
+WITH OBJECT IDENTIFIER(pseudo, imie_wroga) AS 
+    SELECT pseudo, MAKE_REF(Kocury_p, pseudo) kot, imie_wroga, data_incydentu, opis_incydentu 
+    FROM Wrogowie_kocurow;
+SELECT * FROM Incydenty_p;
