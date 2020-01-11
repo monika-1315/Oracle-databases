@@ -23,6 +23,14 @@ SELECT k1.imie, k1.w_stadku_od "POLUJE OD"
    -- ON k1.pseudo = k2.pseudo 
     WHERE k2.imie='JACEK' AND k1.w_stadku_od < k2.w_stadku_od
     ORDER BY 2 DESC;
+    
+--Zad19
+--a
+SELECT k1.imie, k1.funkcja, DEREF(k1.szef).imie "Szef1", DECODE(DEREF(DEREF(k1.szef).szef).imie, null, ' ',DEREF(DEREF(k1.szef).szef).imie) "Szef2", 
+DECODE(DEREF(DEREF(DEREF(k1.szef).szef).szef).imie, null, ' ',DEREF(DEREF(DEREF(k1.szef).szef).szef).imie) "Szef3"
+    FROM Kocury2 k1
+    WHERE k1.funkcja IN ('KOT', 'MILUSIA');
+    
 --Zad22
 SELECT k.funkcja, k.pseudo, sel.lw "Liczba wrogow"
 FROM Kocury2 k JOIN
