@@ -27,3 +27,34 @@ BEGIN
     FORALL i IN 1..plebs.COUNT SAVE EXCEPTIONS
     INSERT INTO Elita_r VALUES (elita(i), plebs(i));
 END;
+/
+
+SELECT * FROM ELITA_R;
+SELECT * FROM PLEBS_R;
+
+CREATE TABLE KONTO_MYSZY
+(nr_myszy NUMBER(5) CONSTRAINT konto_nr_pk PRIMARY KEY,
+ data_wprowadzenia DATE,
+ data_usuniecia DATE,
+ wlasciciel VARCHAR(15) CONSTRAINT konto_wl_fk REFERENCES Elita_r(pseudo),
+    CONSTRAINT konto_myszy_daty CHECK(data_wprowadzenia<=data_usuniecia));
+    
+CREATE SEQUENCE nry_myszy_konto;
+
+DECLARE
+    TYPE t_ps IS TABLE OF VARCHAR2(15);
+    koty1 t_ps:=t_ps();
+    koty2 t_ps:=t_ps();
+BEGIN
+    SELECT pseudo
+    BULK COLLECT INTO koty1 FROM Elita_r;
+    SELECT e.pseudo 
+    BULK COLLECT INTO koty2 FROM Elita_r e JOIN Kocury k ON e.pseudo=k.pseudo WHERE k.przydzial_myszy>50;
+    
+    FORALL i in 1..koty1.COUNT SAVE EXCEPTIONS
+    INSERT INTO Konto_myszy VALUES (nry_myszy_konto.NEXTVAL, SYSDATE, null, koty1(i));   
+    FORALL i in 1..koty2.COUNT SAVE EXCEPTIONS
+    INSERT INTO Konto_myszy VALUES (nry_myszy_konto.NEXTVAL, SYSDATE, null, koty2(i));
+END;
+/
+SELECT * FROM Konto_myszy;
